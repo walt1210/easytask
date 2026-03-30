@@ -1,6 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import { useTheme } from "next-themes"
 import { createClient } from "@/lib/supabase/client"
 import {
   LayoutDashboard,
@@ -16,6 +17,7 @@ import {
   User,
   AlertTriangle,
 } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 interface AppSidebarProps {
@@ -48,6 +50,7 @@ export function AppSidebar({
   userName,
 }: AppSidebarProps) {
   const router = useRouter()
+  const { theme, setTheme } = useTheme()
   const supabase = createClient()
 
   const handleLogout = async () => {
@@ -80,19 +83,20 @@ export function AppSidebar({
           const Icon = item.icon
           const isActive = activeView === item.id
           return (
-            <button
+            <Button
               key={item.id}
+              variant={isActive ? "default" : "ghost"}
               onClick={() => onViewChange(item.id)}
               className={cn(
-                "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium",
+                "w-full justify-start gap-3 px-3 py-2.5 h-auto",
                 isActive
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                  ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
                   : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               )}
             >
               <Icon className="h-4 w-4" />
               {item.label}
-            </button>
+            </Button>
           )
         })}
 
@@ -105,19 +109,20 @@ export function AppSidebar({
             const Icon = item.icon
             const isActive = activeFilter === item.id
             return (
-              <button
+              <Button
                 key={item.id}
+                variant={isActive ? "secondary" : "ghost"}
                 onClick={() => onFilterChange(item.id)}
                 className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium",
+                  "w-full justify-start gap-3 px-3 py-2.5 h-auto",
                   isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent/80"
                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 )}
               >
                 <Icon className="h-4 w-4" />
                 {item.label}
-              </button>
+              </Button>
             )
           })}
         </div>
@@ -125,14 +130,22 @@ export function AppSidebar({
 
       {/* Bottom Section */}
       <div className="p-4 border-t border-sidebar-border space-y-1">
-        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors text-sm font-medium">
+        <Button
+          variant="ghost"
+          onClick={() => {/* TODO: Implement settings */}}
+          className="w-full justify-start gap-3 px-3 py-2.5 h-auto text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        >
           <Settings className="h-4 w-4" />
           Settings
-        </button>
-        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors text-sm font-medium">
-          <Moon className="h-4 w-4" />
-          Dark Mode
-        </button>
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className="w-full justify-start gap-3 px-3 py-2.5 h-auto text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        >
+          {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          {theme === "dark" ? "Light Mode" : "Dark Mode"}
+        </Button>
       </div>
 
       {/* User Profile */}
@@ -145,13 +158,15 @@ export function AppSidebar({
             <p className="text-sm font-medium text-sidebar-foreground truncate">{userName}</p>
             <p className="text-xs text-sidebar-foreground/60">Pro Plan</p>
           </div>
-          <button 
+          <Button 
+            variant="ghost"
+            size="icon"
             onClick={handleLogout}
-            className="p-1.5 rounded-lg text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+            className="p-1.5 h-8 w-8 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent"
             title="Sign out"
           >
             <LogOut className="h-4 w-4" />
-          </button>
+          </Button>
         </div>
       </div>
     </aside>
