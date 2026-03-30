@@ -30,7 +30,6 @@ interface AppSidebarProps {
 
 const mainNavItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "tasks", label: "All Tasks", icon: CheckSquare },
   { id: "calendar", label: "Calendar", icon: Calendar },
   { id: "focus", label: "Focus Mode", icon: Clock },
 ]
