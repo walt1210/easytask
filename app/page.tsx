@@ -268,46 +268,70 @@ export default function EasyTaskApp() {
 
       {/* Main Content */}
       <main className="flex-1 min-w-0">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-          <Header userName={userName} onAddTask={() => setIsModalOpen(true)} />
+  <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+    <Header userName={userName} onAddTask={() => setIsModalOpen(true)} />
 
-          <div className="grid gap-6 lg:grid-cols-3 mb-6">
-            <div className="lg:col-span-1">
-              <EnergySelector value={energy} onChange={setEnergy} />
-            </div>
-            <div className="lg:col-span-2">
-              <StatsCards tasks={tasks} />
-            </div>
+    {/* ── DASHBOARD / ALL TASKS view ── */}
+    {(activeView === "dashboard" || activeView === "tasks") && (
+      <>
+        <div className="grid gap-6 lg:grid-cols-3 mb-6">
+          <div className="lg:col-span-1">
+            <EnergySelector value={energy} onChange={setEnergy} />
           </div>
-
-          <div className="space-y-4 mb-6">
-            <FocusCard
-              task={focusTask}
-              onMarkDone={handleMarkDone}
-              onSkip={handleSkip}
-            />
-            <SmartSuggestion
-              tasks={tasks}
-              onApply={() => {
-                // Smart reorder based on energy and deadlines
-              }}
-            />
+          <div className="lg:col-span-2">
+            <StatsCards tasks={tasks} />
           </div>
-
-          <TaskList
-            tasks={sortedTasks}
-            onToggleTask={handleToggleTask}
-            onDeleteTask={handleDeleteTask}
-            onEditTask={handleEditTask}
-          />
-
-          <AddTaskModal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            onAdd={handleAddTask}
-          />
         </div>
-      </main>
+        <div className="space-y-4 mb-6">
+          <FocusCard
+            task={focusTask}
+            onMarkDone={handleMarkDone}
+            onSkip={handleSkip}
+          />
+          <SmartSuggestion tasks={tasks} onApply={() => {}} />
+        </div>
+        <TaskList
+          tasks={sortedTasks}
+          onToggleTask={handleToggleTask}
+          onDeleteTask={handleDeleteTask}
+          onEditTask={handleEditTask}
+        />
+      </>
+    )}
+
+    {/* ── CALENDAR view ── */}
+    {activeView === "calendar" && (
+      <div className="flex flex-col items-center justify-center h-64 text-muted-foreground gap-3">
+        <span className="text-5xl">📅</span>
+        <p className="text-lg font-medium">Calendar coming soon</p>
+        <p className="text-sm">Google Calendar integration is on the roadmap.</p>
+      </div>
+    )}
+
+    {/* ── FOCUS MODE view ── */}
+    {activeView === "focus" && (
+      <div className="space-y-4">
+        <FocusCard
+          task={focusTask}
+          onMarkDone={handleMarkDone}
+          onSkip={handleSkip}
+        />
+        <TaskList
+          tasks={sortedTasks.filter(t => t.status !== "done")}
+          onToggleTask={handleToggleTask}
+          onDeleteTask={handleDeleteTask}
+          onEditTask={handleEditTask}
+        />
+      </div>
+    )}
+
+    <AddTaskModal
+      isOpen={isModalOpen}
+      onClose={() => setIsModalOpen(false)}
+      onAdd={handleAddTask}
+    />
+  </div>
+</main>
     </div>
   )
 }
