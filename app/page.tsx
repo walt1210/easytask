@@ -14,6 +14,7 @@ import { TaskList } from "@/components/task-list"
 import { AddTaskModal } from "@/components/add-task-modal"
 import { type EnergyLevel } from "@/lib/store"
 import { CalendarView } from "@/components/calendar-view"
+import { SettingsView } from "@/components/settings-view"
 import { 
   type Task, 
   createTask, 
@@ -32,6 +33,7 @@ export default function EasyTaskApp() {
   const [userName, setUserName] = useState("User")
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [userEmail, setUserEmail] = useState("")
   const router = useRouter()
   const supabase = createClient()
 
@@ -60,6 +62,7 @@ export default function EasyTaskApp() {
 
       setIsAuthenticated(true)
       setUserName(user.email?.split("@")[0] || "User")
+      setUserEmail(user.email || "")
       await fetchTasks()
       setIsLoading(false)
     }
@@ -257,34 +260,34 @@ export default function EasyTaskApp() {
         onFilterChange={(filter) => {
   setActiveFilter(filter)
   if (activeView !== "calendar") setActiveView("dashboard")
-}}
-        userName={userName}
-      />
+  }}
+          userName={userName}
+        />
 
-      {/* Mobile Navigation */}
-      <MobileNav
-        activeView={activeView}
-        onViewChange={setActiveView}
-        activeFilter={activeFilter}
-        onFilterChange={(filter) => {
-  setActiveFilter(filter)
-  if (activeView !== "calendar") setActiveView("dashboard")
-}}
-        userName={userName}
-      />
+        {/* Mobile Navigation */}
+        <MobileNav
+          activeView={activeView}
+          onViewChange={setActiveView}
+          activeFilter={activeFilter}
+          onFilterChange={(filter) => {
+    setActiveFilter(filter)
+    if (activeView !== "calendar") setActiveView("dashboard")
+  }}
+          userName={userName}
+        />
 
-      {/* Main Content */}
-      <main className="flex-1 min-w-0">
-  <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-    <Header
-      userName={userName}
-      onAddTask={() => setIsModalOpen(true)}
-      tasks={tasks}
-      onSearchSelect={(id) => {
-        setActiveView("dashboard")
-        setActiveFilter("all")
-      }}
-    />
+        {/* Main Content */}
+        <main className="flex-1 min-w-0">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+      <Header
+        userName={userName}
+        onAddTask={() => setIsModalOpen(true)}
+        tasks={tasks}
+        onSearchSelect={(id) => {
+          setActiveView("dashboard")
+          setActiveFilter("all")
+        }}
+      />
 
     {/* ── DASHBOARD / ALL TASKS view ── */}
     {(activeView === "dashboard" || activeView === "tasks") && (
@@ -340,6 +343,11 @@ export default function EasyTaskApp() {
           onEditTask={handleEditTask}
         />
       </div>
+    )}
+
+    {/* ── SETTINGS view ── */}
+    {activeView === "settings" && (
+      <SettingsView userName={userName} userEmail={userEmail} />
     )}
 
     <AddTaskModal
