@@ -13,7 +13,7 @@ import { SmartSuggestion } from "@/components/smart-suggestion"
 import { TaskList } from "@/components/task-list"
 import { AddTaskModal } from "@/components/add-task-modal"
 import { type EnergyLevel } from "@/lib/store"
-import { Calendar, Clock } from "lucide-react"
+import { CalendarView } from "@/components/calendar-view"
 import { 
   type Task, 
   createTask, 
@@ -254,7 +254,10 @@ export default function EasyTaskApp() {
         activeView={activeView}
         onViewChange={setActiveView}
         activeFilter={activeFilter}
-        onFilterChange={setActiveFilter}
+        onFilterChange={(filter) => {
+  setActiveFilter(filter)
+  if (activeView !== "calendar") setActiveView("dashboard")
+}}
         userName={userName}
       />
 
@@ -263,7 +266,10 @@ export default function EasyTaskApp() {
         activeView={activeView}
         onViewChange={setActiveView}
         activeFilter={activeFilter}
-        onFilterChange={setActiveFilter}
+        onFilterChange={(filter) => {
+  setActiveFilter(filter)
+  if (activeView !== "calendar") setActiveView("dashboard")
+}}
         userName={userName}
       />
 
@@ -310,83 +316,14 @@ export default function EasyTaskApp() {
 
     {/* ── CALENDAR view ── */}
     {activeView === "calendar" && (
-  <div className="space-y-6">
-    <div>
-      <h2 className="text-2xl font-bold">Calendar</h2>
-      <p className="text-muted-foreground text-sm mt-1">Your tasks organized by due date.</p>
-    </div>
-
-    {/* Group tasks by due date */}
-    {(() => {
-      const withDate = sortedTasks.filter(t => t.due_date)
-      const withoutDate = sortedTasks.filter(t => !t.due_date)
-
-      const grouped = withDate.reduce((acc, task) => {
-        const key = task.due_date!
-        if (!acc[key]) acc[key] = []
-        acc[key].push(task)
-        return acc
-      }, {} as Record<string, typeof sortedTasks>)
-
-      const sortedKeys = Object.keys(grouped).sort()
-
-      return (
-        <div className="space-y-6">
-          {sortedKeys.length === 0 && withoutDate.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-48 text-muted-foreground gap-2">
-              <Calendar className="h-10 w-10 opacity-30" />
-              <p className="font-medium">No tasks yet</p>
-              <p className="text-sm">Add a task with a due date to see it here.</p>
-            </div>
-          )}
-
-          {sortedKeys.map(date => {
-            const d = new Date(date + "T00:00:00")
-            const isToday = new Date().toDateString() === d.toDateString()
-            const isPast = d < new Date(new Date().setHours(0,0,0,0))
-            return (
-              <div key={date}>
-                <div className="flex items-center gap-3 mb-3">
-                  <span className={`text-sm font-semibold px-2.5 py-0.5 rounded-full ${
-                    isToday ? "bg-primary text-primary-foreground" :
-                    isPast  ? "bg-destructive/15 text-destructive" :
-                              "bg-muted text-muted-foreground"
-                  }`}>
-                    {isToday ? "Today" : isPast ? "Overdue" : d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-                  </span>
-                  <div className="flex-1 h-px bg-border" />
-                  <span className="text-xs text-muted-foreground">{grouped[date].length} task{grouped[date].length !== 1 ? "s" : ""}</span>
-                </div>
-                <TaskList
-                  tasks={grouped[date]}
-                  onToggleTask={handleToggleTask}
-                  onDeleteTask={handleDeleteTask}
-                  onEditTask={handleEditTask}
-                />
-              </div>
-            )
-          })}
-
-          {withoutDate.length > 0 && (
-            <div>
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-sm font-semibold px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground">No due date</span>
-                <div className="flex-1 h-px bg-border" />
-                <span className="text-xs text-muted-foreground">{withoutDate.length} task{withoutDate.length !== 1 ? "s" : ""}</span>
-              </div>
-              <TaskList
-                tasks={withoutDate}
-                onToggleTask={handleToggleTask}
-                onDeleteTask={handleDeleteTask}
-                onEditTask={handleEditTask}
-              />
-            </div>
-          )}
-        </div>
-      )
-    })()}
-  </div>
-)}
+      <CalendarView
+        tasks={sortedTasks}
+        activeFilter={activeFilter}
+        onToggleTask={handleToggleTask}
+        onDeleteTask={handleDeleteTask}
+        onEditTask={handleEditTask}
+      />
+    )}
 
     {/* ── FOCUS MODE view ── */}
     {activeView === "focus" && (
