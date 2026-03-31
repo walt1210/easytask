@@ -22,6 +22,8 @@ import {
   deleteTask as deleteTaskAction 
 } from "@/lib/actions"
 import { Spinner } from "@/components/ui/spinner"
+import { rankTasks } from "@/lib/sorting"
+import { SuggestedTask } from "@/components/suggested-task"
 
 export default function EasyTaskApp() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -85,39 +87,43 @@ export default function EasyTaskApp() {
     return tasks.filter((t) => t.tag === activeFilter)
   }, [tasks, activeFilter])
 
-  // Sort tasks based on energy level
+  // // Sort tasks based on energy level
+  // const sortedTasks = useMemo(() => {
+  //   return [...filteredTasks].sort((a, b) => {
+  //     // Done tasks at the bottom
+  //     if (a.status === "done" && b.status !== "done") return 1
+  //     if (b.status === "done" && a.status !== "done") return -1
+
+  //     // Sort by energy match
+  //     const energyPriority: Record<EnergyLevel, number> = {
+  //       high: energy === "high" ? 0 : energy === "medium" ? 1 : 2,
+  //       medium: energy === "medium" ? 0 : 1,
+  //       low: energy === "low" ? 0 : energy === "medium" ? 1 : 2,
+  //     }
+
+  //     const aPriority = energyPriority[a.energy_required]
+  //     const bPriority = energyPriority[b.energy_required]
+
+  //     if (aPriority !== bPriority) return aPriority - bPriority
+
+  //     // Urgent tasks first
+  //     if (a.tag === "urgent" && b.tag !== "urgent") return -1
+  //     if (b.tag === "urgent" && a.tag !== "urgent") return 1
+
+  //     // Then by due date
+  //     if (a.due_date && b.due_date) {
+  //       return new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+  //     }
+  //     if (a.due_date) return -1
+  //     if (b.due_date) return 1
+
+  //     return 0
+  //   })
+  // }, [filteredTasks, energy])
+
   const sortedTasks = useMemo(() => {
-    return [...filteredTasks].sort((a, b) => {
-      // Done tasks at the bottom
-      if (a.status === "done" && b.status !== "done") return 1
-      if (b.status === "done" && a.status !== "done") return -1
-
-      // Sort by energy match
-      const energyPriority: Record<EnergyLevel, number> = {
-        high: energy === "high" ? 0 : energy === "medium" ? 1 : 2,
-        medium: energy === "medium" ? 0 : 1,
-        low: energy === "low" ? 0 : energy === "medium" ? 1 : 2,
-      }
-
-      const aPriority = energyPriority[a.energy_required]
-      const bPriority = energyPriority[b.energy_required]
-
-      if (aPriority !== bPriority) return aPriority - bPriority
-
-      // Urgent tasks first
-      if (a.tag === "urgent" && b.tag !== "urgent") return -1
-      if (b.tag === "urgent" && a.tag !== "urgent") return 1
-
-      // Then by due date
-      if (a.due_date && b.due_date) {
-        return new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
-      }
-      if (a.due_date) return -1
-      if (b.due_date) return 1
-
-      return 0
-    })
-  }, [filteredTasks, energy])
+    return rankTasks(filteredTasks, energy);
+  }, [filteredTasks, energy]);
 
   // Get the focus task (first non-done, non-skipped task)
   const focusTask = useMemo(() => {
@@ -125,6 +131,17 @@ export default function EasyTaskApp() {
       (t) => t.status !== "done" && !skippedTaskIds.has(t.id)
     ) || null
   }, [sortedTasks, skippedTaskIds])
+
+  // Handler for the Suggested Task button
+  const handleFocusSuggested = useCallback((taskId: string) => {
+    // Clear from skipped so it's guaranteed to show in FocusCard
+    setSkippedTaskIds(prev => {
+      const next = new Set(prev);
+      next.delete(taskId);
+      return next;
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
   const handleToggleTask = async (id: string) => {
     const task = tasks.find((t) => t.id === id)
@@ -300,6 +317,11 @@ export default function EasyTaskApp() {
             <StatsCards tasks={tasks} />
           </div>
         </div>
+        {/* 2. Pass the central energy state and setter to the SuggestedTask component */}
+        <SuggestedTask 
+          tasks={tasks} 
+          currentEnergy={energy} 
+        />
         <div className="space-y-4 mb-6">
           <FocusCard
             task={focusTask}
@@ -312,7 +334,7 @@ export default function EasyTaskApp() {
           tasks={sortedTasks}
           onToggleTask={handleToggleTask}
           onDeleteTask={handleDeleteTask}
-          onEditTask={handleEditTask}
+          onUpdateTask={handleEditTask}
         />
       </>
     )}
@@ -340,7 +362,7 @@ export default function EasyTaskApp() {
           tasks={sortedTasks.filter(t => t.status !== "done")}
           onToggleTask={handleToggleTask}
           onDeleteTask={handleDeleteTask}
-          onEditTask={handleEditTask}
+          onUpdateTask={handleEditTask}
         />
       </div>
     )}

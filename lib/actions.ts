@@ -136,3 +136,42 @@ export async function toggleTaskComplete(taskId: string, currentStatus: string) 
   const newStatus = currentStatus === "done" ? "todo" : "done"
   return updateTaskStatus(taskId, newStatus)
 }
+
+export async function updateTask(taskId: string, updates: Partial<Task>) {
+  const supabase = await createClient()
+  
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: "Not authenticated" }
+
+  // We explicitly map the fields to avoid accidental injection of invalid columns
+  const allowedUpdates: Partial<Task> = {
+    title: updates.title,
+    description: updates.description,
+    due_date: updates.due_date,
+    due_time: updates.due_time,
+    tag: updates.tag,
+    energy_required: updates.energy_required,
+    status: updates.status,
+  }
+
+  // Handle auto-setting completed_at if status changed to done
+  if (updates.status === "done") {
+    allowedUpdates.completed_at = new Date().toISOString()
+  } else if (updates.status === "todo" || updates.status === "in_progress") {
+    allowedUpdates.completed_at = null
+  }
+
+  const { error } = await supabase
+    .from("tasks")
+    .update(allowedUpdates)
+    .eq("id", taskId)
+    .eq("user_id", user.id) // Security: Ensure user owns the task
+
+  if (error) {
+    console.error("Error updating task:", error)
+    return { error: error.message }
+  }
+
+  revalidatePath("/")
+  return { error: null }
+}
