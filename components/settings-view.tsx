@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import { useState } from "react"
 import { useTheme } from "next-themes"
 import { createClient } from "@/lib/supabase/client"
@@ -36,7 +37,9 @@ export function SettingsView({ userName, userEmail }: SettingsViewProps) {
   const [profileSaved, setProfileSaved] = useState(false)
 
   // Appearance
-  const [accentColor, setAccentColor] = useState("orange")
+  const [accentColor, setAccentColor] = useState(() => {
+  return localStorage.getItem("accent-color") || "orange"
+})
 
   // Security
   const [currentPassword, setCurrentPassword] = useState("")
@@ -55,18 +58,35 @@ export function SettingsView({ userName, userEmail }: SettingsViewProps) {
     { id: "security",   label: "Account & Security", icon: <Shield className="h-4 w-4" /> },
   ]
 
+  useEffect(() => {
+  const saved = localStorage.getItem("accent-color")
+  if (saved) {
+    const color = ACCENT_COLORS.find(c => c.value === saved)
+    if (color) {
+      document.documentElement.style.setProperty("--primary", color.light)
+      document.documentElement.style.setProperty("--ring", color.light)
+    }
+  }
+}, [])
+
   // ── Save profile
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
+  const { error } = await supabase.auth.updateUser({
+    data: { full_name: displayName }
+  })
+  if (!error) {
     setProfileSaved(true)
     setTimeout(() => setProfileSaved(false), 2500)
+    window.location.reload()
   }
-
+}
   // ── Apply accent color to CSS variable
   const applyAccent = (color: typeof ACCENT_COLORS[number]) => {
-    setAccentColor(color.value)
-    document.documentElement.style.setProperty("--primary", color.light)
-    document.documentElement.style.setProperty("--ring",    color.light)
-  }
+  setAccentColor(color.value)
+  document.documentElement.style.setProperty("--primary", color.light)
+  document.documentElement.style.setProperty("--ring", color.light)
+  localStorage.setItem("accent-color", color.value)
+}
 
   // ── Change password
   const handleChangePassword = async () => {

@@ -63,7 +63,7 @@ export default function EasyTaskApp() {
       }
 
       setIsAuthenticated(true)
-      setUserName(user.email?.split("@")[0] || "User")
+      setUserName(user.user_metadata?.full_name || user.email?.split("@")[0] || "User")
       setUserEmail(user.email || "")
       await fetchTasks()
       setIsLoading(false)
