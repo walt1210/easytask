@@ -250,7 +250,7 @@ export function CalendarView({
                 key={idx}
                 onClick={() => setSelectedDate(key)}
                 className={cn(
-                  "min-h-[80px] p-2 border-b border-r border-border text-left transition-colors relative",
+                  "min-h-[80px] sm:min-h-[100px]",
                   "hover:bg-muted/40",
                   isSel && "bg-primary/8 ring-2 ring-inset ring-primary/60",
                   !isCurrentMonth && "opacity-35",
@@ -276,7 +276,7 @@ export function CalendarView({
                     <div
                       key={t.id}
                       className={cn(
-                        "text-[10px] font-semibold px-1.5 py-0.5 rounded truncate leading-tight border",
+                        "text-[10px] font-semibold px-1.5 py-0.5 rounded leading-tight border break-words",
                         t.status === "done"
                           ? "bg-muted/60 text-muted-foreground line-through border-border"
                           : t.tag === "urgent"

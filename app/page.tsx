@@ -322,6 +322,7 @@ export default function EasyTaskApp() {
           timerRunning={pomodoroIsRunning}
           timerSecondsLeft={pomodoroSecondsLeft}
           timerTaskName={pomodoroTask?.title ?? null}
+          onAddTask={() => setIsModalOpen(true)}   // ← add this
         />
 
         {/* Main Content */}
