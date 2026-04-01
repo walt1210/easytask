@@ -29,6 +29,9 @@ interface MobileNavProps {
   activeFilter: string
   onFilterChange: (filter: string) => void
   userName: string
+  timerRunning?: boolean
+  timerSecondsLeft?: number
+  timerTaskName?: string | null
 }
 
 const mainNavItems = [
@@ -51,6 +54,9 @@ export function MobileNav({
   activeFilter,
   onFilterChange,
   userName,
+  timerRunning = false,
+  timerSecondsLeft = 0,
+  timerTaskName = null,
 }: MobileNavProps) {
   const [isOpen, setIsOpen] = useState(false)
   const router = useRouter()

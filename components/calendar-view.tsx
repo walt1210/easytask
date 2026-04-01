@@ -252,7 +252,7 @@ export function CalendarView({
                 className={cn(
                   "min-h-[80px] p-2 border-b border-r border-border text-left transition-colors relative",
                   "hover:bg-muted/40",
-                  isSel && "bg-primary/8 ring-1 ring-inset ring-primary/40",
+                  isSel && "bg-primary/8 ring-2 ring-inset ring-primary/60",
                   !isCurrentMonth && "opacity-35",
                   // last row — no bottom border
                   idx >= 35 && "border-b-0",
@@ -276,17 +276,21 @@ export function CalendarView({
                     <div
                       key={t.id}
                       className={cn(
-                        "text-[10px] font-medium px-1.5 py-0.5 rounded truncate leading-tight",
+                        "text-[10px] font-semibold px-1.5 py-0.5 rounded truncate leading-tight border",
                         t.status === "done"
-                          ? "bg-muted text-muted-foreground line-through"
-                          : cn(TAG_SOFT[t.tag], "border")
+                          ? "bg-muted/60 text-muted-foreground line-through border-border"
+                          : t.tag === "urgent"
+                          ? "bg-destructive text-white border-destructive/80"
+                          : t.tag === "work"
+                          ? "bg-blue-500 text-white border-blue-600"
+                          : "bg-accent text-white border-accent/80"
                       )}
                     >
                       {t.title}
                     </div>
                   ))}
                   {dayTasks.length > 2 && (
-                    <div className="text-[10px] text-muted-foreground font-medium px-1">
+                    <div className="text-[10px] text-muted-foreground font-semibold px-1">
                       +{dayTasks.length - 2} more
                     </div>
                   )}
@@ -320,7 +324,7 @@ export function CalendarView({
               tasks={selectedTasks}
               onToggleTask={onToggleTask}
               onDeleteTask={onDeleteTask}
-              onEditTask={onEditTask}
+              onUpdateTask={onEditTask}
             />
           ) : (
             <div className="flex flex-col items-center justify-center h-28 text-muted-foreground gap-2 border border-dashed border-border rounded-xl">
@@ -346,7 +350,7 @@ export function CalendarView({
             tasks={filteredTasks}
             onToggleTask={onToggleTask}
             onDeleteTask={onDeleteTask}
-            onEditTask={onEditTask}
+            onUpdateTask={onEditTask}
           />
         ) : (
           <div className="flex flex-col items-center justify-center h-28 text-muted-foreground gap-2 border border-dashed border-border rounded-xl">

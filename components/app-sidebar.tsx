@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 import { createClient } from "@/lib/supabase/client"
+import { useEffect, useState } from "react"
 import {
   LayoutDashboard,
   CheckSquare,
@@ -26,6 +27,9 @@ interface AppSidebarProps {
   activeFilter: string
   onFilterChange: (filter: string) => void
   userName: string
+  timerRunning: boolean
+  timerSecondsLeft: number
+  timerTaskName: string | null
 }
 
 const mainNavItems = [
@@ -47,6 +51,9 @@ export function AppSidebar({
   activeFilter,
   onFilterChange,
   userName,
+  timerRunning,
+  timerSecondsLeft,
+  timerTaskName,
 }: AppSidebarProps) {
   const router = useRouter()
   const { theme, setTheme } = useTheme()
@@ -78,12 +85,14 @@ export function AppSidebar({
         <p className="text-xs font-medium text-sidebar-foreground/50 uppercase tracking-wider mb-3 px-3">
           Navigation
         </p>
-        {mainNavItems.map((item) => {
-          const Icon = item.icon
-          const isActive = activeView === item.id
-          return (
+      {mainNavItems.map((item) => {
+        const Icon = item.icon
+        const isActive = activeView === item.id
+        const isFocus = item.id === "focus"
+
+        return (
+          <div key={item.id}>
             <Button
-              key={item.id}
               variant={isActive ? "default" : "ghost"}
               onClick={() => onViewChange(item.id)}
               className={cn(
@@ -95,9 +104,31 @@ export function AppSidebar({
             >
               <Icon className="h-4 w-4" />
               {item.label}
+              {isFocus && timerRunning && (
+                <span className="ml-auto flex items-center gap-1 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">
+                  ● LIVE
+                </span>
+              )}
             </Button>
-          )
-        })}
+
+            {/* Mini timer strip — shows under Focus Mode when running + not on focus view */}
+            {isFocus && timerRunning && activeView !== "focus" && (
+              <div
+                onClick={() => onViewChange("focus")}
+                className="mx-1 mt-1 mb-1 px-3 py-2.5 rounded-lg bg-primary border border-primary cursor-pointer hover:bg-primary/90 transition-colors"
+              >
+                <p className="text-[10px] font-semibold text-primary-foreground truncate">
+                  {timerTaskName ?? "Timer running"}
+                </p>
+                <p className="text-[13px] font-mono font-bold text-primary-foreground mt-0.5 tracking-wider">
+                  {String(Math.floor(timerSecondsLeft / 60)).padStart(2, "0")}:
+                  {String(timerSecondsLeft % 60).padStart(2, "0")}
+                </p>
+              </div>
+            )}
+          </div>
+        )
+      })}
 
         {/* Categories */}
         <div className="pt-6">
