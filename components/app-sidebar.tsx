@@ -105,7 +105,7 @@ export function AppSidebar({
               <Icon className="h-4 w-4" />
               {item.label}
               {isFocus && timerRunning && (
-                <span className="ml-auto flex items-center gap-1.5 bg-primary/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">
+                <span className="ml-auto flex items-center gap-1 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">
                   ● LIVE
                 </span>
               )}
@@ -115,12 +115,12 @@ export function AppSidebar({
             {isFocus && timerRunning && activeView !== "focus" && (
               <div
                 onClick={() => onViewChange("focus")}
-                className="mx-1 mt-1 mb-1 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/15 transition-colors"
+                className="mx-1 mt-1 mb-1 px-3 py-2.5 rounded-lg bg-primary border border-primary cursor-pointer hover:bg-primary/90 transition-colors"
               >
-                <p className="text-[10px] font-semibold text-primary truncate">
+                <p className="text-[10px] font-semibold text-primary-foreground truncate">
                   {timerTaskName ?? "Timer running"}
                 </p>
-                <p className="text-[11px] font-mono font-bold text-foreground mt-0.5">
+                <p className="text-[13px] font-mono font-bold text-primary-foreground mt-0.5 tracking-wider">
                   {String(Math.floor(timerSecondsLeft / 60)).padStart(2, "0")}:
                   {String(timerSecondsLeft % 60).padStart(2, "0")}
                 </p>
