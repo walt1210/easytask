@@ -15,6 +15,7 @@ import { AddTaskModal } from "@/components/add-task-modal"
 import { type EnergyLevel } from "@/lib/store"
 import { CalendarView } from "@/components/calendar-view"
 import { SettingsView } from "@/components/settings-view"
+import { PomodoroTimer } from "@/components/pomodoro-timer"
 import { 
   type Task, 
   createTask, 
@@ -366,42 +367,10 @@ export default function EasyTaskApp() {
 
     {/* ── FOCUS MODE view ── */}
     {activeView === "focus" && (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold">Focus Mode</h2>
-          <p className="text-muted-foreground text-sm mt-1">
-            Deep work — distractions minimized. Stay on one task at a time.
-          </p>
-        </div>
-
-        {/* Stats strip — shows In Progress updating live */}
-        <StatsCards tasks={tasks} />
-
-        <FocusCard
-          task={focusTask}
-          onMarkDone={handleMarkDone}
-          onSkip={handleSkip}
-        />
-
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-base">Today's Focus</h3>
-            <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full font-medium tracking-wide uppercase">
-              Progress&nbsp;
-              <strong className="text-foreground">
-                {tasks.filter(t => t.status === "done").length}/
-                {tasks.filter(t => t.status !== "done" || t.status === "done").length}
-              </strong>
-            </span>
-          </div>
-          <TaskList
-            tasks={sortedTasks.filter(t => t.status !== "done")}
-            onToggleTask={handleToggleTask}
-            onDeleteTask={handleDeleteTask}
-            onUpdateTask={handleEditTask}
-          />
-        </div>
-      </div>
+      <PomodoroTimer
+        tasks={tasks}
+        onMarkDone={handleMarkDone}
+      />
     )}
 
     {/* ── SETTINGS view ── */}
