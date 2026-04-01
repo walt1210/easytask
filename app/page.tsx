@@ -132,6 +132,20 @@ export default function EasyTaskApp() {
     ) || null
   }, [sortedTasks, skippedTaskIds])
 
+  // Auto-mark the focus task as "in_progress" when in focus mode
+  useEffect(() => {
+    if (activeView !== "focus" || !focusTask) return
+    if (focusTask.status === "in_progress") return
+
+    // Optimistic update
+    setTasks(prev =>
+      prev.map(t =>
+        t.id === focusTask.id ? { ...t, status: "in_progress" as const } : t
+      )
+    )
+    updateTaskStatus(focusTask.id, "in_progress")
+  }, [activeView, focusTask?.id])
+
   // Handler for the Suggested Task button
   const handleFocusSuggested = useCallback((taskId: string) => {
     // Clear from skipped so it's guaranteed to show in FocusCard
@@ -352,18 +366,41 @@ export default function EasyTaskApp() {
 
     {/* ── FOCUS MODE view ── */}
     {activeView === "focus" && (
-      <div className="space-y-4">
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold">Focus Mode</h2>
+          <p className="text-muted-foreground text-sm mt-1">
+            Deep work — distractions minimized. Stay on one task at a time.
+          </p>
+        </div>
+
+        {/* Stats strip — shows In Progress updating live */}
+        <StatsCards tasks={tasks} />
+
         <FocusCard
           task={focusTask}
           onMarkDone={handleMarkDone}
           onSkip={handleSkip}
         />
-        <TaskList
-          tasks={sortedTasks.filter(t => t.status !== "done")}
-          onToggleTask={handleToggleTask}
-          onDeleteTask={handleDeleteTask}
-          onUpdateTask={handleEditTask}
-        />
+
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-base">Today's Focus</h3>
+            <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full font-medium tracking-wide uppercase">
+              Progress&nbsp;
+              <strong className="text-foreground">
+                {tasks.filter(t => t.status === "done").length}/
+                {tasks.filter(t => t.status !== "done" || t.status === "done").length}
+              </strong>
+            </span>
+          </div>
+          <TaskList
+            tasks={sortedTasks.filter(t => t.status !== "done")}
+            onToggleTask={handleToggleTask}
+            onDeleteTask={handleDeleteTask}
+            onUpdateTask={handleEditTask}
+          />
+        </div>
       </div>
     )}
 
