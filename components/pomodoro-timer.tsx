@@ -9,19 +9,15 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { Task } from "@/lib/actions"
 
-interface PomodoroTimerProps {
-  tasks: Task[]
-  onMarkDone: (id: string) => void
-}
-
+// ── Types & constants (outside the component)
 type TimerMode = "work" | "break"
 type Preset = { label: string; work: number; break: number }
 
 const PRESETS: Preset[] = [
-  { label: "Pomodoro",  work: 25, break: 5  },
-  { label: "Long",      work: 50, break: 10 },
-  { label: "Short",     work: 15, break: 3  },
-  { label: "Custom",    work: 25, break: 5  },
+  { label: "Pomodoro", work: 25, break: 5  },
+  { label: "Long",     work: 50, break: 10 },
+  { label: "Short",    work: 15, break: 3  },
+  { label: "Custom",   work: 25, break: 5  },
 ]
 
 const ENERGY_ICONS: Record<string, React.ReactNode> = {
@@ -46,22 +42,73 @@ function formatTime(seconds: number) {
   return `${m}:${s}`
 }
 
-export function PomodoroTimer({ tasks, onMarkDone }: PomodoroTimerProps) {
-  const pendingTasks = tasks.filter(t => t.status !== "done")
+// ── Props interface (outside the component)
+interface PomodoroTimerProps {
+  tasks: Task[]
+  onMarkDone: (id: string) => void
+  // lifted state
+  selectedTask: Task | null
+  onSelectTask: (task: Task | null) => void
+  secondsLeft: number
+  onSecondsLeftChange: (s: number) => void
+  isRunning: boolean
+  onIsRunningChange: (v: boolean) => void
+  mode: TimerMode
+  onModeChange: (m: TimerMode) => void
+  sessionsCompleted: number
+  onSessionsChange: (n: number) => void
+  presetIdx: number
+  onPresetIdxChange: (n: number) => void
+  customWork: number
+  onCustomWorkChange: (n: number) => void
+  customBreak: number
+  onCustomBreakChange: (n: number) => void
+}
 
-  // ── Timer state
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
-  const [presetIdx, setPresetIdx]       = useState(0)
-  const [mode, setMode]                 = useState<TimerMode>("work")
-  const [secondsLeft, setSecondsLeft]   = useState(PRESETS[0].work * 60)
-  const [isRunning, setIsRunning]       = useState(false)
-  const [sessionsCompleted, setSessionsCompleted] = useState(0)
-  const [showTaskPicker, setShowTaskPicker]       = useState(false)
-  const [showCustom, setShowCustom]               = useState(false)
-  const [customWork, setCustomWork]               = useState(25)
-  const [customBreak, setCustomBreak]             = useState(5)
+// ── Single export (outside the component)
+export function PomodoroTimer({
+  tasks,
+  onMarkDone,
+  selectedTask,
+  onSelectTask,
+  secondsLeft,
+  onSecondsLeftChange,
+  isRunning,
+  onIsRunningChange,
+  mode,
+  onModeChange,
+  sessionsCompleted,
+  onSessionsChange,
+  presetIdx,
+  onPresetIdxChange,
+  customWork,
+  onCustomWorkChange,
+  customBreak,
+  onCustomBreakChange,
+}: PomodoroTimerProps) {
+
+  // ── Local UI-only state (not lifted — doesn't need to persist)
+  const [showTaskPicker, setShowTaskPicker] = useState(false)
+  const [showCustom, setShowCustom]         = useState(false)
+
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const audioCtxRef = useRef<AudioContext | null>(null)
+
+  // Use a ref to always have fresh values inside the interval callback
+  const secondsLeftRef  = useRef(secondsLeft)
+  const modeRef         = useRef(mode)
+  const sessionsRef     = useRef(sessionsCompleted)
+  const customWorkRef   = useRef(customWork)
+  const customBreakRef  = useRef(customBreak)
+  const presetIdxRef    = useRef(presetIdx)
+
+  // Keep refs in sync with props
+  useEffect(() => { secondsLeftRef.current  = secondsLeft      }, [secondsLeft])
+  useEffect(() => { modeRef.current         = mode             }, [mode])
+  useEffect(() => { sessionsRef.current     = sessionsCompleted }, [sessionsCompleted])
+  useEffect(() => { customWorkRef.current   = customWork       }, [customWork])
+  useEffect(() => { customBreakRef.current  = customBreak      }, [customBreak])
+  useEffect(() => { presetIdxRef.current    = presetIdx        }, [presetIdx])
 
   const currentPreset = presetIdx === 3
     ? { label: "Custom", work: customWork, break: customBreak }
@@ -93,60 +140,77 @@ export function PomodoroTimer({ tasks, onMarkDone }: PomodoroTimerProps) {
     } catch {}
   }, [])
 
-  // ── Tick
+  // ── Tick — reads from refs so the dependency array stays stable
   useEffect(() => {
     if (!isRunning) {
       if (intervalRef.current) clearInterval(intervalRef.current)
       return
     }
+
     intervalRef.current = setInterval(() => {
-      setSecondsLeft(prev => {
-        if (prev <= 1) {
-          playBeep()
-          clearInterval(intervalRef.current!)
-          setIsRunning(false)
-          if (mode === "work") {
-            setSessionsCompleted(s => s + 1)
-            setMode("break")
-            return currentPreset.break * 60
-          } else {
-            setMode("work")
-            return currentPreset.work * 60
-          }
+      const current  = secondsLeftRef.current
+      const curMode  = modeRef.current
+      const curIdx   = presetIdxRef.current
+      const cWork    = customWorkRef.current
+      const cBreak   = customBreakRef.current
+      const sessions = sessionsRef.current
+
+      const preset = curIdx === 3
+        ? { work: cWork, break: cBreak }
+        : PRESETS[curIdx]
+
+      if (current <= 1) {
+        playBeep()
+        clearInterval(intervalRef.current!)
+        onIsRunningChange(false)
+        if (curMode === "work") {
+          onSessionsChange(sessions + 1)
+          onModeChange("break")
+          onSecondsLeftChange(preset.break * 60)
+        } else {
+          onModeChange("work")
+          onSecondsLeftChange(preset.work * 60)
         }
-        return prev - 1
-      })
+      } else {
+        onSecondsLeftChange(current - 1)
+      }
     }, 1000)
-    return () => clearInterval(intervalRef.current!)
-  }, [isRunning, mode, currentPreset, playBeep])
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
+  }, [isRunning]) // ← only re-runs when isRunning changes; reads fresh values via refs
 
   // ── Reset when preset changes
   const applyPreset = (idx: number) => {
-    setIsRunning(false)
-    setPresetIdx(idx)
-    setMode("work")
+    onIsRunningChange(false)
+    onPresetIdxChange(idx)
+    onModeChange("work")
     const p = idx === 3
       ? { work: customWork, break: customBreak }
       : PRESETS[idx]
-    setSecondsLeft(p.work * 60)
+    onSecondsLeftChange(p.work * 60)
   }
 
-  const handleReset = () => {
-    setIsRunning(false)
-    setMode("work")
-    setSecondsLeft(currentPreset.work * 60)
-  }
+  const handleReset = useCallback(() => {
+    onIsRunningChange(false)
+    onModeChange("work")
+    const p = presetIdxRef.current === 3
+      ? { work: customWorkRef.current, break: customBreakRef.current }
+      : PRESETS[presetIdxRef.current]
+    onSecondsLeftChange(p.work * 60)
+  }, [onIsRunningChange, onModeChange, onSecondsLeftChange])
 
   const handleStart = () => {
     if (!selectedTask) { setShowTaskPicker(true); return }
-    setIsRunning(true)
+    onIsRunningChange(true)
   }
 
   const handleMarkDone = () => {
     if (!selectedTask) return
     onMarkDone(selectedTask.id)
-    setSelectedTask(null)
-    setIsRunning(false)
+    onSelectTask(null)
+    onIsRunningChange(false)
     handleReset()
   }
 
@@ -154,6 +218,8 @@ export function PomodoroTimer({ tasks, onMarkDone }: PomodoroTimerProps) {
   const radius = 88
   const circumference = 2 * Math.PI * radius
   const strokeDashoffset = circumference - (progress / 100) * circumference
+
+  const pendingTasks = tasks.filter(t => t.status !== "done")
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
@@ -198,7 +264,7 @@ export function PomodoroTimer({ tasks, onMarkDone }: PomodoroTimerProps) {
               </div>
             </div>
             <button
-              onClick={() => { setSelectedTask(null); setIsRunning(false); handleReset() }}
+              onClick={() => { onSelectTask(null); onIsRunningChange(false); handleReset() }}
               className="text-muted-foreground hover:text-foreground transition-colors mt-0.5"
             >
               <X className="h-4 w-4" />
@@ -234,7 +300,7 @@ export function PomodoroTimer({ tasks, onMarkDone }: PomodoroTimerProps) {
               pendingTasks.map(task => (
                 <button
                   key={task.id}
-                  onClick={() => { setSelectedTask(task); setShowTaskPicker(false); handleReset() }}
+                  onClick={() => { onSelectTask(task); setShowTaskPicker(false); handleReset() }}
                   className="w-full flex items-start gap-3 px-5 py-3.5 hover:bg-muted/50 transition-colors text-left"
                 >
                   <span className={cn(
@@ -305,7 +371,6 @@ export function PomodoroTimer({ tasks, onMarkDone }: PomodoroTimerProps) {
           ))}
         </div>
 
-        {/* Custom inputs */}
         {presetIdx === 3 && showCustom && (
           <div className="grid grid-cols-2 gap-3 pt-3 border-t border-border">
             <div>
@@ -317,8 +382,8 @@ export function PomodoroTimer({ tasks, onMarkDone }: PomodoroTimerProps) {
                 value={customWork}
                 onChange={e => {
                   const v = Math.max(1, Math.min(120, Number(e.target.value)))
-                  setCustomWork(v)
-                  if (!isRunning && mode === "work") setSecondsLeft(v * 60)
+                  onCustomWorkChange(v)
+                  if (!isRunning && mode === "work") onSecondsLeftChange(v * 60)
                 }}
                 className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-primary transition-colors"
               />
@@ -332,8 +397,8 @@ export function PomodoroTimer({ tasks, onMarkDone }: PomodoroTimerProps) {
                 value={customBreak}
                 onChange={e => {
                   const v = Math.max(1, Math.min(60, Number(e.target.value)))
-                  setCustomBreak(v)
-                  if (!isRunning && mode === "break") setSecondsLeft(v * 60)
+                  onCustomBreakChange(v)
+                  if (!isRunning && mode === "break") onSecondsLeftChange(v * 60)
                 }}
                 className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-primary transition-colors"
               />
@@ -345,7 +410,6 @@ export function PomodoroTimer({ tasks, onMarkDone }: PomodoroTimerProps) {
       {/* ── Timer Ring */}
       <div className="bg-card border border-border rounded-2xl p-8 flex flex-col items-center gap-6">
 
-        {/* Mode badge */}
         <div className={cn(
           "flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold border",
           mode === "work"
@@ -361,23 +425,16 @@ export function PomodoroTimer({ tasks, onMarkDone }: PomodoroTimerProps) {
           )}
         </div>
 
-        {/* SVG Ring */}
         <div className="relative">
           <svg width="220" height="220" viewBox="0 0 220 220" className="-rotate-90">
-            {/* Track */}
             <circle
               cx="110" cy="110" r={radius}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="10"
+              fill="none" stroke="currentColor" strokeWidth="10"
               className="text-border"
             />
-            {/* Progress */}
             <circle
               cx="110" cy="110" r={radius}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="10"
+              fill="none" stroke="currentColor" strokeWidth="10"
               strokeLinecap="round"
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
@@ -388,7 +445,6 @@ export function PomodoroTimer({ tasks, onMarkDone }: PomodoroTimerProps) {
             />
           </svg>
 
-          {/* Center display */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span className="text-5xl font-bold font-mono tracking-tight text-foreground">
               {formatTime(secondsLeft)}
@@ -401,11 +457,9 @@ export function PomodoroTimer({ tasks, onMarkDone }: PomodoroTimerProps) {
           </div>
         </div>
 
-        {/* Controls */}
         <div className="flex items-center gap-3">
           <Button
-            variant="outline"
-            size="icon"
+            variant="outline" size="icon"
             className="h-11 w-11 rounded-full"
             onClick={handleReset}
           >
@@ -418,7 +472,7 @@ export function PomodoroTimer({ tasks, onMarkDone }: PomodoroTimerProps) {
               "h-14 w-14 rounded-full text-lg shadow-lg transition-all",
               !selectedTask && "opacity-60"
             )}
-            onClick={isRunning ? () => setIsRunning(false) : handleStart}
+            onClick={isRunning ? () => onIsRunningChange(false) : handleStart}
           >
             {isRunning
               ? <Pause className="h-6 w-6" />
@@ -427,8 +481,7 @@ export function PomodoroTimer({ tasks, onMarkDone }: PomodoroTimerProps) {
 
           {selectedTask && (
             <Button
-              variant="outline"
-              size="icon"
+              variant="outline" size="icon"
               className="h-11 w-11 rounded-full border-accent/40 hover:bg-accent/10 hover:text-accent"
               onClick={handleMarkDone}
               title="Mark task as done"
@@ -445,7 +498,6 @@ export function PomodoroTimer({ tasks, onMarkDone }: PomodoroTimerProps) {
         )}
       </div>
 
-      {/* ── Session summary */}
       {sessionsCompleted > 0 && (
         <div className="bg-primary/5 border border-primary/20 rounded-2xl px-5 py-4 flex items-center gap-4">
           <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">

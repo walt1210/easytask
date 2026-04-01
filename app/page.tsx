@@ -15,7 +15,7 @@ import { AddTaskModal } from "@/components/add-task-modal"
 import { type EnergyLevel } from "@/lib/store"
 import { CalendarView } from "@/components/calendar-view"
 import { SettingsView } from "@/components/settings-view"
-import { PomodoroTimer } from "@/components/pomodoro-timer"
+import { PomodoroTimer } from "../components/pomodoro-timer"
 import { 
   type Task, 
   createTask, 
@@ -39,6 +39,16 @@ export default function EasyTaskApp() {
   const [userEmail, setUserEmail] = useState("")
   const router = useRouter()
   const supabase = createClient()
+
+  // ── Pomodoro state (lifted so it persists across view changes)
+  const [pomodoroTask, setPomodoroTask]               = useState<Task | null>(null)
+  const [pomodoroSecondsLeft, setPomodoroSecondsLeft] = useState(25 * 60)
+  const [pomodoroIsRunning, setPomodoroIsRunning]     = useState(false)
+  const [pomodoroMode, setPomodoroMode]               = useState<"work" | "break">("work")
+  const [pomodoroSessions, setPomodoroSessions]       = useState(0)
+  const [pomodoroPresetIdx, setPomodoroPresetIdx]     = useState(0)
+  const [pomodoroCustomWork, setPomodoroCustomWork]   = useState(25)
+  const [pomodoroCustomBreak, setPomodoroCustomBreak] = useState(5)
 
   const fetchTasks = useCallback(async () => {
     const { data, error } = await supabase
@@ -290,11 +300,14 @@ export default function EasyTaskApp() {
         onViewChange={setActiveView}
         activeFilter={activeFilter}
         onFilterChange={(filter) => {
-  setActiveFilter(filter)
-  if (activeView !== "calendar") setActiveView("dashboard")
-  }}
-          userName={userName}
-        />
+          setActiveFilter(filter)
+          if (activeView !== "calendar") setActiveView("dashboard")
+        }}
+        userName={userName}
+        timerRunning={pomodoroIsRunning}
+        timerSecondsLeft={pomodoroSecondsLeft}
+        timerTaskName={pomodoroTask?.title ?? null}
+      />
 
         {/* Mobile Navigation */}
         <MobileNav
@@ -302,10 +315,13 @@ export default function EasyTaskApp() {
           onViewChange={setActiveView}
           activeFilter={activeFilter}
           onFilterChange={(filter) => {
-    setActiveFilter(filter)
-    if (activeView !== "calendar") setActiveView("dashboard")
-  }}
+            setActiveFilter(filter)
+            if (activeView !== "calendar") setActiveView("dashboard")
+          }}
           userName={userName}
+          timerRunning={pomodoroIsRunning}
+          timerSecondsLeft={pomodoroSecondsLeft}
+          timerTaskName={pomodoroTask?.title ?? null}
         />
 
         {/* Main Content */}
@@ -329,7 +345,7 @@ export default function EasyTaskApp() {
             <EnergySelector value={energy} onChange={setEnergy} />
           </div>
           <div className="lg:col-span-2">
-            <StatsCards tasks={tasks} />
+            <StatsCards tasks={tasks} focusedTaskName={pomodoroIsRunning ? pomodoroTask?.title : null} />
           </div>
         </div>
         {/* 2. Pass the central energy state and setter to the SuggestedTask component */}
@@ -370,6 +386,23 @@ export default function EasyTaskApp() {
       <PomodoroTimer
         tasks={tasks}
         onMarkDone={handleMarkDone}
+        // persisted state
+        selectedTask={pomodoroTask}
+        onSelectTask={setPomodoroTask}
+        secondsLeft={pomodoroSecondsLeft}
+        onSecondsLeftChange={setPomodoroSecondsLeft}
+        isRunning={pomodoroIsRunning}
+        onIsRunningChange={setPomodoroIsRunning}
+        mode={pomodoroMode}
+        onModeChange={setPomodoroMode}
+        sessionsCompleted={pomodoroSessions}
+        onSessionsChange={setPomodoroSessions}
+        presetIdx={pomodoroPresetIdx}
+        onPresetIdxChange={setPomodoroPresetIdx}
+        customWork={pomodoroCustomWork}
+        onCustomWorkChange={setPomodoroCustomWork}
+        customBreak={pomodoroCustomBreak}
+        onCustomBreakChange={setPomodoroCustomBreak}
       />
     )}
 

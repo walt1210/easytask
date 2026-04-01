@@ -5,9 +5,10 @@ import type { Task } from "@/lib/actions"
 
 interface StatsCardsProps {
   tasks: Task[]
+  focusedTaskName?: string | null
 }
 
-export function StatsCards({ tasks }: StatsCardsProps) {
+export function StatsCards({ tasks, focusedTaskName }: StatsCardsProps) {
   const totalTasks = tasks.length
   const doneTasks = tasks.filter((t) => t.status === "done").length
   const inProgressTasks = tasks.filter((t) => t.status === "in_progress").length
@@ -53,20 +54,25 @@ export function StatsCards({ tasks }: StatsCardsProps) {
       </div>
 
       <div className="bg-card rounded-xl p-5 border border-border shadow-sm">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-3xl font-bold text-foreground">{inProgressTasks}</p>
-            <p className="text-sm text-muted-foreground">In progress</p>
-          </div>
-          <Clock className="h-5 w-5 text-yellow-500" />
+      <div className="flex items-start justify-between">
+        <div className="min-w-0 flex-1">
+          <p className="text-3xl font-bold text-foreground">{inProgressTasks}</p>
+          <p className="text-sm text-muted-foreground">In progress</p>
         </div>
-        {overdueTasks > 0 && (
-          <p className="text-xs text-destructive mt-2 font-medium flex items-center gap-1">
-            <AlertCircle className="h-3 w-3" />
-            {overdueTasks} overdue
-          </p>
-        )}
+        <Clock className="h-5 w-5 text-yellow-500 flex-shrink-0" />
       </div>
+      {focusedTaskName ? (
+        <p className="text-xs text-yellow-500 mt-2 font-medium truncate flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse flex-shrink-0" />
+          {focusedTaskName}
+        </p>
+      ) : overdueTasks > 0 ? (
+        <p className="text-xs text-destructive mt-2 font-medium flex items-center gap-1">
+          <AlertCircle className="h-3 w-3" />
+          {overdueTasks} overdue
+        </p>
+      ) : null}
+    </div>
 
       <div className="bg-card rounded-xl p-5 border border-border shadow-sm">
         <div className="flex items-start justify-between mb-3">
