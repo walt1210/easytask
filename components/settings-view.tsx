@@ -38,8 +38,11 @@ export function SettingsView({ userName, userEmail }: SettingsViewProps) {
 
   // Appearance
   const [accentColor, setAccentColor] = useState(() => {
-  return localStorage.getItem("accent-color") || "orange"
-})
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("accent-color") || "orange"
+    }
+    return "orange"
+  })
 
   // Security
   const [currentPassword, setCurrentPassword] = useState("")
@@ -59,36 +62,33 @@ export function SettingsView({ userName, userEmail }: SettingsViewProps) {
   ]
 
   useEffect(() => {
-  const saved = localStorage.getItem("accent-color")
-  if (saved) {
-    const color = ACCENT_COLORS.find(c => c.value === saved)
-    if (color) {
-      document.documentElement.style.setProperty("--primary", color.light)
-      document.documentElement.style.setProperty("--ring", color.light)
+    const saved = localStorage.getItem("accent-color")
+    if (saved) {
+      const color = ACCENT_COLORS.find(c => c.value === saved)
+      if (color) {
+        document.documentElement.style.setProperty("--primary", color.light)
+        document.documentElement.style.setProperty("--ring", color.light)
+      }
+    }
+  }, [])
+
+  const handleSaveProfile = async () => {
+    const { error } = await supabase.auth.updateUser({
+      data: { full_name: displayName }
+    })
+    if (!error) {
+      setProfileSaved(true)
+      setTimeout(() => setProfileSaved(false), 2500)
     }
   }
-}, [])
 
-  // ── Save profile
-  const handleSaveProfile = async () => {
-  const { error } = await supabase.auth.updateUser({
-    data: { full_name: displayName }
-  })
-  if (!error) {
-    setProfileSaved(true)
-    setTimeout(() => setProfileSaved(false), 2500)
-    window.location.reload()
-  }
-}
-  // ── Apply accent color to CSS variable
   const applyAccent = (color: typeof ACCENT_COLORS[number]) => {
-  setAccentColor(color.value)
-  document.documentElement.style.setProperty("--primary", color.light)
-  document.documentElement.style.setProperty("--ring", color.light)
-  localStorage.setItem("accent-color", color.value)
-}
+    setAccentColor(color.value)
+    document.documentElement.style.setProperty("--primary", color.light)
+    document.documentElement.style.setProperty("--ring", color.light)
+    localStorage.setItem("accent-color", color.value)
+  }
 
-  // ── Change password
   const handleChangePassword = async () => {
     setPasswordMsg(null)
     if (!newPassword || newPassword.length < 6) {
@@ -108,11 +108,9 @@ export function SettingsView({ userName, userEmail }: SettingsViewProps) {
     }
   }
 
-  // ── Delete account
   const handleDeleteAccount = async () => {
     if (deleteConfirm !== userEmail) return
     setIsDeleting(true)
-    // Sign out — actual deletion requires a server action with service role key
     await supabase.auth.signOut()
     window.location.href = "/auth/login"
   }
@@ -127,16 +125,18 @@ export function SettingsView({ userName, userEmail }: SettingsViewProps) {
         </p>
       </div>
 
-      <div className="flex gap-6 items-start">
+      {/* ── FIX 1: flex-col on mobile, flex-row on desktop */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:gap-6 lg:items-start">
 
-        {/* ── Sidebar nav */}
-        <nav className="w-48 flex-shrink-0 space-y-1 sticky top-8">
+        {/* ── FIX 2: horizontal scrolling tabs on mobile, vertical sidebar on desktop */}
+        <nav className="w-full lg:w-48 lg:flex-shrink-0 lg:sticky lg:top-8 flex flex-row lg:flex-col gap-2 overflow-x-auto pb-1 lg:pb-0">
           {navItems.map(item => (
             <button
               key={item.id}
               onClick={() => setActiveSection(item.id)}
               className={cn(
-                "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left",
+                // FIX 3: flex-shrink-0 on mobile so tabs don't compress, full-width on desktop
+                "flex-shrink-0 lg:w-full flex items-center gap-2 lg:gap-3 px-3 py-2 lg:py-2.5 rounded-xl text-sm font-medium transition-colors text-left whitespace-nowrap",
                 activeSection === item.id
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -144,8 +144,9 @@ export function SettingsView({ userName, userEmail }: SettingsViewProps) {
             >
               {item.icon}
               {item.label}
+              {/* FIX 4: hide arrow on mobile (horizontal layout) */}
               {activeSection !== item.id && (
-                <ChevronRight className="h-3.5 w-3.5 ml-auto opacity-40" />
+                <ChevronRight className="h-3.5 w-3.5 ml-auto opacity-40 hidden lg:block" />
               )}
             </button>
           ))}
@@ -156,83 +157,79 @@ export function SettingsView({ userName, userEmail }: SettingsViewProps) {
 
           {/* ════ PROFILE ════ */}
           {activeSection === "profile" && (
-            <>
-              <SettingsCard title="Profile Information" description="Update your display name and avatar.">
-                {/* Avatar */}
-                <div className="flex items-center gap-5 mb-6">
-                  <div className="relative">
-                    <div className="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center text-primary-foreground text-2xl font-bold">
-                      {displayName.charAt(0).toUpperCase()}
-                    </div>
-                    <button className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-card border-2 border-border flex items-center justify-center hover:bg-muted transition-colors">
-                      <Camera className="h-3.5 w-3.5 text-muted-foreground" />
-                    </button>
+            <SettingsCard title="Profile Information" description="Update your display name and avatar.">
+              <div className="flex items-center gap-5 mb-6">
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center text-primary-foreground text-2xl font-bold">
+                    {displayName.charAt(0).toUpperCase()}
                   </div>
-                  <div>
-                    <p className="font-semibold">{displayName}</p>
-                    <p className="text-sm text-muted-foreground">{userEmail}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Pro Plan</p>
-                  </div>
+                  <button className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-card border-2 border-border flex items-center justify-center hover:bg-muted transition-colors">
+                    <Camera className="h-3.5 w-3.5 text-muted-foreground" />
+                  </button>
                 </div>
+                <div>
+                  <p className="font-semibold">{displayName}</p>
+                  <p className="text-sm text-muted-foreground">{userEmail}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Pro Plan</p>
+                </div>
+              </div>
 
-                {/* Fields */}
-                <div className="space-y-4">
-                  <Field label="Display name">
-                    <input
-                      type="text"
-                      value={displayName}
-                      onChange={e => setDisplayName(e.target.value)}
-                      className="et-input"
-                      placeholder="Your name"
-                    />
-                  </Field>
-                  <Field label="Email address">
-                    <input
-                      type="email"
-                      value={userEmail}
-                      disabled
-                      className="et-input opacity-50 cursor-not-allowed"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1.5">
-                      Email cannot be changed here. Contact support if needed.
-                    </p>
-                  </Field>
-                </div>
+              <div className="space-y-4">
+                <Field label="Display name">
+                  <input
+                    type="text"
+                    value={displayName}
+                    onChange={e => setDisplayName(e.target.value)}
+                    className="et-input"
+                    placeholder="Your name"
+                  />
+                </Field>
+                <Field label="Email address">
+                  <input
+                    type="email"
+                    value={userEmail}
+                    disabled
+                    className="et-input opacity-50 cursor-not-allowed"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1.5">
+                    Email cannot be changed here. Contact support if needed.
+                  </p>
+                </Field>
+              </div>
 
-                <div className="mt-6 flex items-center gap-3">
-                  <Button onClick={handleSaveProfile} className="gap-2">
-                    {profileSaved && <Check className="h-4 w-4" />}
-                    {profileSaved ? "Saved!" : "Save changes"}
-                  </Button>
-                  {profileSaved && (
-                    <span className="text-sm text-accent font-medium flex items-center gap-1.5">
-                      <Check className="h-3.5 w-3.5" /> Profile updated
-                    </span>
-                  )}
-                </div>
-              </SettingsCard>
-            </>
+              <div className="mt-6 flex items-center gap-3">
+                <Button onClick={handleSaveProfile} className="gap-2">
+                  {profileSaved && <Check className="h-4 w-4" />}
+                  {profileSaved ? "Saved!" : "Save changes"}
+                </Button>
+                {profileSaved && (
+                  <span className="text-sm text-accent font-medium flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5" /> Profile updated
+                  </span>
+                )}
+              </div>
+            </SettingsCard>
           )}
 
           {/* ════ APPEARANCE ════ */}
           {activeSection === "appearance" && (
             <>
               <SettingsCard title="Theme" description="Choose between light and dark mode.">
-                <div className="grid grid-cols-3 gap-3">
+                {/* 3 cols on mobile too — they're small enough */}
+                <div className="grid grid-cols-3 gap-2 lg:gap-3">
                   {(["light", "dark", "system"] as const).map(t => (
                     <button
                       key={t}
                       onClick={() => setTheme(t)}
                       className={cn(
-                        "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
+                        "flex flex-col items-center gap-2 p-3 lg:p-4 rounded-xl border-2 transition-all",
                         theme === t
                           ? "border-primary bg-primary/5"
                           : "border-border hover:border-muted-foreground/40 hover:bg-muted/40"
                       )}
                     >
-                      {/* Mini preview */}
                       <div className={cn(
-                        "w-full h-12 rounded-lg overflow-hidden flex",
+                        "w-full h-10 rounded-lg overflow-hidden flex",
                         t === "dark"   ? "bg-zinc-900" :
                         t === "light"  ? "bg-zinc-100" :
                         "bg-gradient-to-r from-zinc-100 to-zinc-900"
@@ -248,9 +245,9 @@ export function SettingsView({ userName, userEmail }: SettingsViewProps) {
                           <div className={cn("h-1.5 w-1/2 rounded-full", t === "dark" ? "bg-zinc-700" : "bg-zinc-300")} />
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1">
                         {theme === t && <Check className="h-3 w-3 text-primary" />}
-                        <span className="text-sm font-medium capitalize">{t}</span>
+                        <span className="text-xs font-medium capitalize">{t}</span>
                       </div>
                     </button>
                   ))}
@@ -258,7 +255,8 @@ export function SettingsView({ userName, userEmail }: SettingsViewProps) {
               </SettingsCard>
 
               <SettingsCard title="Accent Color" description="Personalize your primary color across the app.">
-                <div className="grid grid-cols-6 gap-3">
+                {/* 3 cols on mobile, 6 on desktop */}
+                <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 lg:gap-3">
                   {ACCENT_COLORS.map(color => (
                     <button
                       key={color.value}
@@ -306,7 +304,6 @@ export function SettingsView({ userName, userEmail }: SettingsViewProps) {
                       onToggle={() => setShowNew(p => !p)}
                       placeholder="Min. 6 characters"
                     />
-                    {/* Strength bar */}
                     {newPassword.length > 0 && (
                       <div className="mt-2 space-y-1">
                         <div className="flex gap-1">
@@ -356,7 +353,6 @@ export function SettingsView({ userName, userEmail }: SettingsViewProps) {
                 </div>
               </SettingsCard>
 
-              {/* Danger zone */}
               <SettingsCard
                 title="Danger Zone"
                 description="Permanently delete your account and all your data."
@@ -386,7 +382,7 @@ export function SettingsView({ userName, userEmail }: SettingsViewProps) {
                         className="et-input border-destructive/50 focus:border-destructive"
                       />
                     </Field>
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3">
                       <Button
                         variant="destructive"
                         disabled={deleteConfirm !== userEmail || isDeleting}
@@ -406,11 +402,9 @@ export function SettingsView({ userName, userEmail }: SettingsViewProps) {
               </SettingsCard>
             </>
           )}
-
         </div>
       </div>
 
-      {/* Shared input styles */}
       <style>{`
         .et-input {
           width: 100%;
@@ -432,8 +426,6 @@ export function SettingsView({ userName, userEmail }: SettingsViewProps) {
   )
 }
 
-// ── Reusable sub-components
-
 function SettingsCard({
   title, description, children, danger,
 }: {
@@ -444,10 +436,10 @@ function SettingsCard({
 }) {
   return (
     <div className={cn(
-      "bg-card border rounded-2xl p-6",
+      "bg-card border rounded-2xl p-4 lg:p-6",
       danger ? "border-destructive/40" : "border-border"
     )}>
-      <div className="mb-5">
+      <div className="mb-4 lg:mb-5">
         <h3 className={cn("font-semibold text-base", danger && "text-destructive")}>{title}</h3>
         <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
       </div>
