@@ -14,7 +14,7 @@ import { TaskList } from "@/components/task-list"
 import { AddTaskModal } from "@/components/add-task-modal"
 import { type EnergyLevel } from "@/lib/store"
 import { CalendarView } from "@/components/calendar-view"
-import { SettingsView } from "@/components/settings-view"
+import { SettingsView } from "../components/settings-view"
 import { PomodoroTimer } from "../components/pomodoro-timer"
 import { 
   type Task, 
