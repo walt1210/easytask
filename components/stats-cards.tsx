@@ -12,6 +12,7 @@ export function StatsCards({ tasks, focusedTaskName }: StatsCardsProps) {
   const totalTasks = tasks.length
   const doneTasks = tasks.filter((t) => t.status === "done").length
   const inProgressTasks = tasks.filter((t) => t.status === "in_progress").length
+  const todoTasks = tasks.filter((t) => t.status !== "done").length
   const overdueTasks = tasks.filter((t) => {
     if (t.status === "done" || !t.due_date) return false
     const now = new Date()
@@ -53,7 +54,7 @@ export function StatsCards({ tasks, focusedTaskName }: StatsCardsProps) {
         <p className="text-xs text-accent mt-2 font-medium">on track</p>
       </div>
 
-      <div className="bg-card rounded-xl p-5 border border-border shadow-sm">
+      {/* <div className="bg-card rounded-xl p-5 border border-border shadow-sm">
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
           <p className="text-3xl font-bold text-foreground">{inProgressTasks}</p>
@@ -72,7 +73,16 @@ export function StatsCards({ tasks, focusedTaskName }: StatsCardsProps) {
           {overdueTasks} overdue
         </p>
       ) : null}
-    </div>
+    </div> */}
+      <div className="bg-card rounded-xl p-5 border border-border shadow-sm">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-3xl font-bold text-foreground">{todoTasks}</p>
+            <p className="text-sm text-muted-foreground font-medium">Tasks To Do</p>
+          </div>
+          <Clock className="h-5 w-5 text-orange-500/50" />
+        </div>
+      </div>
 
       <div className="bg-card rounded-xl p-5 border border-border shadow-sm">
         <div className="flex items-start justify-between mb-3">

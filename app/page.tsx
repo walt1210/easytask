@@ -349,16 +349,12 @@ export default function EasyTaskApp() {
             <StatsCards tasks={tasks} focusedTaskName={pomodoroIsRunning ? pomodoroTask?.title : null} />
           </div>
         </div>
-        {/* 2. Pass the central energy state and setter to the SuggestedTask component */}
-        <SuggestedTask 
-          tasks={tasks} 
-          currentEnergy={energy} 
-        />
         <div className="space-y-4 mb-6">
           <FocusCard
             task={focusTask}
+            currentEnergy={energy}
             onMarkDone={handleMarkDone}
-            onSkip={handleSkip}
+            onFocusMode={() => setActiveView("focus")}
           />
           <SmartSuggestion tasks={tasks} onApply={() => {}} />
         </div>

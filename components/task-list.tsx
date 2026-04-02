@@ -53,9 +53,9 @@ const tagIcons = {
 }
 
 const energyConfig = {
-  low: { color: "text-blue-500 bg-blue-50 border-blue-100", label: "Low Energy" },
-  medium: { color: "text-amber-600 bg-amber-50 border-amber-100", label: "Med Energy" },
-  high: { color: "text-orange-600 bg-orange-50 border-orange-200", label: "High Energy" },
+  low: { color: "text-blue-500 bg-blue-500/10 border-blue-100/20", label: "Low Energy" },
+  medium: { color: "text-amber-500 bg-amber-500/10 border-amber-100/20", label: "Med Energy" },
+  high: { color: "text-orange-500 bg-orange-500/10 border-orange-500/20", label: "High Energy" },
 }
 
 export function TaskList({ tasks, onToggleTask, onDeleteTask, onUpdateTask }: TaskListProps) {
@@ -136,7 +136,7 @@ function TaskItem({ task, onToggle, onDelete, onEditClick, onQuickUpdate }: any)
   return (
     <div className={cn(
       "group flex items-center gap-4 p-4 hover:bg-muted/30 transition-all duration-200 cursor-pointer",
-      isDone && "bg-muted/10 opacity-75"
+      isDone && "bg-muted/20 opacity-80"
     )}>
       {/* Status Toggle */}
       <button
@@ -144,7 +144,7 @@ function TaskItem({ task, onToggle, onDelete, onEditClick, onQuickUpdate }: any)
         onClick={(e) => { e.stopPropagation(); onToggle(task.id); }}
       >
         {isDone ? (
-          <CheckCircle2 className="h-6 w-6 text-emerald-500 fill-emerald-50" />
+          <CheckCircle2 className="h-6 w-6 text-primary" />
         ) : (
           <Circle className="h-6 w-6 text-muted-foreground/40 hover:text-primary transition-colors" />
         )}
@@ -155,14 +155,16 @@ function TaskItem({ task, onToggle, onDelete, onEditClick, onQuickUpdate }: any)
         <div className="flex items-center gap-2 mb-1">
           <span className={cn(
             "font-semibold text-[15px] leading-tight transition-all",
-            isDone && "line-through text-muted-foreground"
+            isDone ? "line-through text-muted-foreground font-normal" : "text-foreground"
           )}>
             {task.title}
           </span>
-          <Badge variant="outline" className={cn("px-1.5 h-5 text-[10px] uppercase font-bold border-none", energy.color)}>
-            <Zap className="w-2.5 h-2.5 mr-0.5 fill-current" />
-            {task.energy_required}
-          </Badge>
+          {!isDone && (
+            <Badge variant="outline" className={cn("px-1.5 h-5 text-[10px] uppercase font-bold border-none", energy.color)}>
+              <Zap className="w-2.5 h-2.5 mr-0.5 fill-current" />
+              {task.energy_required}
+            </Badge>
+          )}
         </div>
         
         <div className="flex items-center gap-3 text-[12px] text-muted-foreground">

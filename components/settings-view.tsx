@@ -19,7 +19,7 @@ interface SettingsViewProps {
 type Section = "profile" | "appearance" | "security"
 
 const ACCENT_COLORS = [
-  { name: "Orange",  value: "orange",  light: "oklch(0.65 0.18 45)",  cls: "bg-orange-500" },
+  { name: "Orange",  value: "orange",  light: "oklch(0.7 0.2 45)",  cls: "bg-orange-500" },
   { name: "Blue",    value: "blue",    light: "oklch(0.55 0.2 240)",   cls: "bg-blue-500"   },
   { name: "Green",   value: "green",   light: "oklch(0.55 0.18 145)",  cls: "bg-green-500"  },
   { name: "Purple",  value: "purple",  light: "oklch(0.55 0.2 290)",   cls: "bg-purple-500" },
@@ -82,12 +82,13 @@ export function SettingsView({ userName, userEmail }: SettingsViewProps) {
     }
   }
 
-  const applyAccent = (color: typeof ACCENT_COLORS[number]) => {
-    setAccentColor(color.value)
-    document.documentElement.style.setProperty("--primary", color.light)
-    document.documentElement.style.setProperty("--ring", color.light)
-    localStorage.setItem("accent-color", color.value)
-  }
+    const applyAccent = (color: typeof ACCENT_COLORS[number]) => {
+      setAccentColor(color.value)
+      document.documentElement.style.setProperty("--primary", color.light)
+      document.documentElement.style.setProperty("--sidebar-primary", color.light)
+      document.documentElement.style.setProperty("--ring", color.light)
+      localStorage.setItem("accent-color", color.value)
+    }
 
   const handleChangePassword = async () => {
     setPasswordMsg(null)
