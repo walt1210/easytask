@@ -85,7 +85,7 @@ export function SettingsView({ userName, userEmail }: SettingsViewProps) {
     const applyAccent = (color: typeof ACCENT_COLORS[number]) => {
       setAccentColor(color.value)
       document.documentElement.style.setProperty("--primary", color.light)
-      document.documentElement.style.setProperty("--sidebar-primary", color.light)
+      // document.documentElement.style.setProperty("--sidebar-primary", color.light)
       document.documentElement.style.setProperty("--ring", color.light)
       localStorage.setItem("accent-color", color.value)
     }

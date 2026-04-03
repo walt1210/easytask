@@ -115,9 +115,9 @@ export function AppSidebar({
             {isFocus && timerRunning && activeView !== "focus" && (
               <div
                 onClick={() => onViewChange("focus")}
-                className="mx-1 mt-1 mb-1 px-3 py-2.5 rounded-lg bg-primary border border-primary cursor-pointer hover:bg-primary/90 transition-colors"
+                className="mx-1 mt-1 mb-1 px-3 py-2.5 rounded-lg bg-sidebar-primary border border-sidebar-primary cursor-pointer hover:bg-sidebar-primary/90 transition-colors"
               >
-                <p className="text-[10px] font-semibold text-primary-foreground truncate">
+                <p className="text-[10px] font-semibold text-sidebar-primary-foreground truncate">
                   {timerTaskName ?? "Timer running"}
                 </p>
                 <p className="text-[13px] font-mono font-bold text-primary-foreground mt-0.5 tracking-wider">
