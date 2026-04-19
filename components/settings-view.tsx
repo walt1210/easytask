@@ -4,6 +4,7 @@ import { useEffect } from "react"
 import { useState } from "react"
 import { useTheme } from "next-themes"
 import { createClient } from "@/lib/supabase/client"
+import { deleteUserAccount } from "@/lib/actions"
 import {
   User, Palette, Shield, Camera, Check,
   Eye, EyeOff, AlertTriangle, ChevronRight,
@@ -110,10 +111,25 @@ export function SettingsView({ userName, userEmail }: SettingsViewProps) {
   }
 
   const handleDeleteAccount = async () => {
-    if (deleteConfirm !== userEmail) return
-    setIsDeleting(true)
-    await supabase.auth.signOut()
-    window.location.href = "/auth/login"
+      if (deleteConfirm !== userEmail) return
+  
+  setIsDeleting(true)
+  
+  // Call the server action
+  const result = await deleteUserAccount()
+  
+    if (result?.error) {
+      console.error(result.error)
+      alert("Failed to delete account: " + result.error)
+      setIsDeleting(false)
+    } 
+    // If successful, the server action handles the redirect automatically
+    
+    
+    // if (deleteConfirm !== userEmail) return
+    // setIsDeleting(true)
+    // await supabase.auth.signOut()
+    // window.location.href = "/auth/login"
   }
 
   return (

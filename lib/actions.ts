@@ -2,6 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { createAdminClient } from "@/lib/supabase/admin"
+import { redirect } from "next/navigation"
 
 export type Task = {
   id: string
@@ -174,4 +176,39 @@ export async function updateTask(taskId: string, updates: Partial<Task>) {
 
   revalidatePath("/")
   return { error: null }
+}
+
+
+
+export async function deleteUserAccount() {
+  const supabase = await createClient()
+  const adminClient = createAdminClient()
+
+  // 1. Get current user session
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: "Not authenticated" }
+
+  // 2. Clean up user's data (Tasks)
+  // This prevents foreign key errors when deleting the auth record
+  const { error: dbError } = await supabase
+    .from("tasks")
+    .delete()
+    .eq("user_id", user.id)
+
+  if (dbError) {
+    console.error("Error clearing user data:", dbError)
+    return { error: "Could not clear user data" }
+  }
+
+  // 3. Delete the actual Auth account
+  const { error: authError } = await adminClient.auth.admin.deleteUser(user.id)
+
+  if (authError) {
+    console.error("Error deleting auth account:", authError)
+    return { error: authError.message }
+  }
+
+  // 4. Sign out and redirect
+  await supabase.auth.signOut()
+  redirect("auth/login")
 }
