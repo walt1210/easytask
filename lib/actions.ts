@@ -179,17 +179,19 @@ export async function updateTask(taskId: string, updates: Partial<Task>) {
 }
 
 
-
 export async function deleteUserAccount() {
   const supabase = await createClient()
   const adminClient = createAdminClient()
 
   // 1. Get current user session
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: "Not authenticated" }
+  
+  if (!user) {
+    return { error: "Not authenticated" }
+  }
 
   // 2. Clean up user's data (Tasks)
-  // This prevents foreign key errors when deleting the auth record
+  // OPTIONAL: If you set "ON DELETE CASCADE" in Supabase, you can remove this block entirely.
   const { error: dbError } = await supabase
     .from("tasks")
     .delete()
@@ -201,6 +203,7 @@ export async function deleteUserAccount() {
   }
 
   // 3. Delete the actual Auth account
+  // This is the heavy lifter. adminClient has the Service Role Key.
   const { error: authError } = await adminClient.auth.admin.deleteUser(user.id)
 
   if (authError) {
@@ -208,7 +211,10 @@ export async function deleteUserAccount() {
     return { error: authError.message }
   }
 
-  // 4. Sign out and redirect
-  await supabase.auth.signOut()
-  redirect("auth/login")
+  // 4. Redirect immediately
+  // DANGER: Do NOT call supabase.auth.signOut() here. 
+  // The user is already deleted; calling signOut() often causes a 
+  // timeout because it tries to find a user that no longer exists.
+  
+  redirect("/auth/login")
 }
