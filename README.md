@@ -2,6 +2,8 @@
 
 A smart task management and focus assistant built with Next.js 15 and Supabase.
 
+Vercel Deployment Page: https://easytask-jet.vercel.app/auth/login
+
 ## Features
 
 - Task management with categories (Work, Personal, Urgent)
