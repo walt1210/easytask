@@ -166,7 +166,7 @@ export function MobileNav({
       </nav>
 
       {/* Spacer for tab bar — prevents content being hidden behind it */}
-      <div className="lg:hidden h-[60px]" />
+      <div className="lg:hidden h-[65px]" />
 
       {/* ── Category Drawer (hamburger) */}
       {isOpen && (

@@ -122,23 +122,52 @@ export function PomodoroTimer({
 
   // ── Beep sound
   const playBeep = useCallback(() => {
-    try {
-      if (!audioCtxRef.current) {
-        audioCtxRef.current = new AudioContext()
-      }
-      const ctx = audioCtxRef.current
-      const osc = ctx.createOscillator()
+  try {
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new AudioContext()
+    }
+    const ctx = audioCtxRef.current
+
+    // Three ascending chime notes played in sequence
+    const notes = [523.25, 659.25, 783.99] // C5, E5, G5 — a major chord arpeggio
+    
+    notes.forEach((freq, i) => {
+      const osc  = ctx.createOscillator()
       const gain = ctx.createGain()
+      
+      // Add a subtle reverb-like second oscillator slightly detuned
+      const osc2  = ctx.createOscillator()
+      const gain2 = ctx.createGain()
+
       osc.connect(gain)
       gain.connect(ctx.destination)
-      osc.frequency.value = 880
-      osc.type = "sine"
-      gain.gain.setValueAtTime(0.3, ctx.currentTime)
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8)
-      osc.start(ctx.currentTime)
-      osc.stop(ctx.currentTime + 0.8)
-    } catch {}
-  }, [])
+      osc2.connect(gain2)
+      gain2.connect(ctx.destination)
+
+      osc.type  = "sine"
+      osc2.type = "sine"
+      osc.frequency.value  = freq
+      osc2.frequency.value = freq * 1.002 // slight detune for warmth
+
+      const startTime = ctx.currentTime + i * 0.22 // stagger each note
+      const duration  = 0.6
+
+      // Bell-like envelope: fast attack, slow decay
+      gain.gain.setValueAtTime(0, startTime)
+      gain.gain.linearRampToValueAtTime(0.28, startTime + 0.01)
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration)
+
+      gain2.gain.setValueAtTime(0, startTime)
+      gain2.gain.linearRampToValueAtTime(0.12, startTime + 0.01)
+      gain2.gain.exponentialRampToValueAtTime(0.001, startTime + duration)
+
+      osc.start(startTime)
+      osc.stop(startTime + duration)
+      osc2.start(startTime)
+      osc2.stop(startTime + duration)
+    })
+  } catch {}
+}, [])
 
   // ── Tick — reads from refs so the dependency array stays stable
   useEffect(() => {

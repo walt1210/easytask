@@ -98,7 +98,7 @@ export function Header({ userName, onAddTask, tasks, onSearchSelect }: HeaderPro
 
   return (
     <>
-      <header className="mb-8">
+      <header className="mb-4 lg:mb-8">
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm font-medium text-muted-foreground tracking-wide">
             {date || "\u00A0"}

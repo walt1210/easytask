@@ -327,7 +327,7 @@ export default function EasyTaskApp() {
 
         {/* Main Content */}
         <main className="flex-1 min-w-0">
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 pb-24 lg:pb-8">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-24 lg:pt-8 lg:pb-8">
       <Header
         userName={userName}
         onAddTask={() => setIsModalOpen(true)}
